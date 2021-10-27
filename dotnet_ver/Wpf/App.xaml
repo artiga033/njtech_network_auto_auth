@@ -1,0 +1,21 @@
+﻿<Application
+    x:Class="Wpf.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:Wpf"
+    xmlns:nf="clr-namespace:Hardcodet.Wpf.TaskbarNotification;assembly=Hardcodet.NotifyIcon.Wpf"
+    ShutdownMode="OnExplicitShutdown"
+    Startup="Application_Startup">
+    <Application.Resources>
+        <nf:TaskbarIcon x:Key="taskbarIcon" IconSource="pack://application:,,,/i32.ico">
+            <nf:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Click="Manually_Connect" Header="手动连接" />
+                    <MenuItem Click="Change_Config" Header="修改配置" />
+                    <MenuItem Click="ExitButton_Click" Header="关闭" />
+                </ContextMenu>
+            </nf:TaskbarIcon.ContextMenu>
+        </nf:TaskbarIcon>
+    </Application.Resources>
+
+</Application>
