@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Net.NetworkInformation;
 
 namespace Wpf
 {
@@ -29,14 +30,60 @@ namespace Wpf
         {
             //this.taskbarIcon = (TaskbarIcon)new XamlReader().LoadAsync(Application.GetResourceStream(new Uri("/TaskbarIcon.xaml",UriKind.Relative)).Stream);
         }
-        private void Application_Startup(object sender, StartupEventArgs e)
+        private async void Application_Startup(object sender, StartupEventArgs e)
         {
             this.taskbarIcon = (TaskbarIcon)this.FindResource("taskbarIcon");
+            var configIsLegal = await this.TryReadConfig();
+            if (!configIsLegal)
+            {
+                ConfigWindow CWindow = new(ref config);
+                var dialogResult = CWindow.ShowDialog();//此方法只在窗口被关闭后返回
+                //这段逻辑的前提是 !configIsLegal
+                //只有输入不合法时，用户必须修改配置，所以如果没有DialogResult==true就退出。
+                //在另一些情况下，如修改一个本身合法的配置，这段逻辑不适用，或者，它必须有ConfigIlleagal的前提。
+                if (!dialogResult.HasValue||!dialogResult.Value)
+                {
+                    this.ExitButton_Click(this, new RoutedEventArgs());
+                }
+            }
 
+            NetworkChange.NetworkAvailabilityChanged += OnNetChange_Connect;
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private async void Manually_Connect(object sender, RoutedEventArgs e)
+        {
+            var res = await AuthViaConfig();
+            this.OnConnected(res);
+        }
+        private async void OnNetChange_Connect(object? sender,EventArgs e)
+        {
+            var res = await AuthViaConfig();
+            this.OnConnected(res);
+        }
+        private void OnConnected(bool result)
+        {
+            this.taskbarIcon?.ShowBalloonTip("Connected", "Your devices is now connected to NjtechHome and ready for Internet.", BalloonIcon.Info);
+
+        }
+        private void Change_Config(object sender, RoutedEventArgs e)
+        {
+            ConfigWindow CWindow = new(ref config);
+            CWindow.ShowDialog();
+        }
+
+
+        private async Task<bool> AuthViaConfig() => await Libs.AuthAsync(this.config.Username, this.config.Password, this.config.Channel);
+        public async Task<bool> TryReadConfig()
+        {
             var configFile = File.Open(Config.FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             using StreamReader reader = new StreamReader(configFile, Encoding.UTF8);
-            var configStr = reader.ReadToEnd();
-            bool configIllegal = false;
+            var configStr = await reader.ReadToEndAsync();
+            bool configIsLegal = true;
 
             try
             {
@@ -44,35 +91,13 @@ namespace Wpf
             }
             catch
             {
-                configIllegal = true;
+                configIsLegal = false;
             }
             if (Config.IsEmptyOrNull(config))
-                configIllegal = true;
+                configIsLegal = false;
 
-            if (configIllegal)
-            {
-                configFile.Close();
-                ConfigWindow CWindow = new(ref config);
-                CWindow.ShowDialog();
-            }
+            return configIsLegal;
         }
-
-        private void ExitButton_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown(33);
-        }
-
-        private async void Manually_Connect(object sender, RoutedEventArgs e)
-        {
-            var authRes = await Libs.AuthAsync(config.Username, config.Password, config.Channel);
-        }
-
-        private void Change_Config(object sender, RoutedEventArgs e)
-        {
-            ConfigWindow CWindow = new(ref config);
-            CWindow.ShowDialog();
-        }
-
     }
 
     public class Config

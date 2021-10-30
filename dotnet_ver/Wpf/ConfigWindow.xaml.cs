@@ -32,6 +32,8 @@ namespace Wpf
 
         private async void SaveConfig(object sender, RoutedEventArgs e)
         {
+            this.DialogResult = true;//设置dialogResult供App判断用户输入
+
             this.Config.Password = this.PasswordTextBox.Password;
             var configFile = File.Open(Config.FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             configFile.SetLength(0);
