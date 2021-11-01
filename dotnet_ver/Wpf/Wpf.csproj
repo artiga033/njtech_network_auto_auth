@@ -5,10 +5,12 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <AssemblyName>NJTechAutoAuth.$(MSBuildProjectName)</AssemblyName>
+    <ApplicationIcon>i128.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="i32.ico" />
+    <Content Include="i128.ico" />
   </ItemGroup>
 
   <ItemGroup>

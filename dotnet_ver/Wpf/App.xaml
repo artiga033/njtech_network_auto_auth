@@ -12,6 +12,12 @@
                 <ContextMenu>
                     <MenuItem Click="Manually_Connect" Header="手动连接" />
                     <MenuItem Click="Change_Config" Header="修改配置" />
+                    <CheckBox
+                        x:Name="setStartupCheckBox"
+                        Checked="Set_Startup"
+                        Unchecked="Unset_Startup">
+                        开机启动
+                    </CheckBox>
                     <MenuItem Click="ExitButton_Click" Header="关闭" />
                 </ContextMenu>
             </nf:TaskbarIcon.ContextMenu>
