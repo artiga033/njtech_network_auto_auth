@@ -59,9 +59,10 @@ namespace Wpf
 
             NetworkChange.NetworkAddressChanged += OnNetChange_Connect;
             //有时程序启动会晚于网络连接，所以在启动是要进行一次连接尝试
-            if(IsNjtechHomeConnected() && !this.isConnecting)
+            if (IsNjtechHomeConnected() && !this.isConnecting)
             {
-                this.Manually_Connect(this, new RoutedEventArgs());
+                bool res = await TryAuthViaConfigAsync();
+                this.OnConnected(res);
             }
         }
 
@@ -77,12 +78,12 @@ namespace Wpf
                 this.isConnecting = true;
                 try
                 {
-                    var res = await AuthViaConfig();
+                    var res = await AuthViaConfigAsync();
                     this.OnConnected(res);
                 }
                 catch (Exception ex)
                 {
-                    this.taskbarIcon?.ShowBalloonTip("Failed Connecting", "An erroe occurs when trying to connect."+"\n"+ex.Message, BalloonIcon.Error);
+                    this.taskbarIcon?.ShowBalloonTip("Failed Connecting", "An erroe occurs when trying to connect." + "\n" + ex.Message, BalloonIcon.Error);
                 }
             }
             else
@@ -101,16 +102,7 @@ namespace Wpf
 
             if (this.IsNjtechHomeConnected())
             {
-                int tryTimes = 0;
-                bool res = false;
-                // 默认尝试三次
-                while (tryTimes < 3)
-                {
-                    res = await AuthViaConfig();
-                    if (res)
-                        break;
-                    await Task.Delay(1000);
-                }
+                bool res = await TryAuthViaConfigAsync();
                 this.OnConnected(res);
             }
         }
@@ -144,7 +136,28 @@ namespace Wpf
             return isNjtechHomeConnected;
         }
 
-        private async Task<bool> AuthViaConfig() => await Libs.AuthAsync(this.config.Username, this.config.Password, this.config.Channel);
+        /// <summary>
+        /// 由于一些原因，每次尝试连接都有可能失败，用此方法指定尝试次数及每次间隔
+        /// </summary>
+        /// <param name="times">尝试次数</param>
+        /// <param name="interval">间隔时间，单位ms</param>
+        /// <returns></returns>
+        private async Task<bool> TryAuthViaConfigAsync(int times = 3, int interval = 1000)
+        {
+            int count = 0;
+            bool success = false;
+
+            while (count++ < times)
+            {
+                success = await AuthViaConfigAsync();
+                if (success)
+                    break;
+                await Task.Delay(1000);
+            }
+
+            return success;
+        }
+        private async Task<bool> AuthViaConfigAsync() => await Libs.AuthAsync(this.config.Username, this.config.Password, this.config.Channel);
         public async Task<bool> TryReadConfig()
         {
             var configFile = File.Open(Config.FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
