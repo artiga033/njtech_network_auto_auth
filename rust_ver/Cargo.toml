@@ -9,5 +9,11 @@ edition = "2018"
 [dependencies]
 reqwest = {version="0.11", features=["blocking","cookies"]}
 regex = "1"
+[target.mipsel-unknown-linux-musl.dependencies]
+openssl={version="0.10",features=["vendored"]}
+openssl-src="300"
 [profile.release]
-lto = true
+opt-level = "z"
+lto=true
+codegen-units = 1
+panic = "abort"
