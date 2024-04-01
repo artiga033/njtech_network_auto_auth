@@ -20,16 +20,14 @@ fi
 echo 'offline'
 echo 'trying to login...'
 # get the Location header value of the result
-location=$(curl -m $timeout http://www.msftconnecttest.com/connecttest.txt -I -s | grep Location | awk '{print $2}')
+location=$(curl -m $timeout http://www.msftconnecttest.com/connecttest.txt -I -s | grep Location | awk '{print $2}' | tr -d 'tr -d '\n\r \t'')
 if [ -z "$location" ]; then
 echo 'failed to get location'
 exit 1
 fi
 echo "redirected to $location"
 # get wlanuserip
-# example location string: http://10.50.255.12/a79.htm?wlanuserip=10.37.78.101&wlanacname=me60-2
-# we need to get the wlanuserip query
-wlanuserip=$(echo $location | awk -F '?' '{print $2}' | awk -F '&' '{print $1}' | awk -F '=' '{print $2}')
+wlanuserip=$(curl $location 2>/dev/null | sed -n "s/^.*v46ip='\(.*\)'.*$/\1/p")
 if [ -z "$wlanuserip" ]; then
 echo 'failed to get wlanuserip'
 exit 1
@@ -37,11 +35,11 @@ fi
 
 echo "got your wlan_user_ip $wlanuserip"
 echo "attempting to login..."
-curl --url "http://10.50.255.12:801/eportal/portal/login?callback=dr1003&login_method=1&user_account=%2C0%2C$account%40$isp&user_password=$password&wlan_user_ip=$wlanuserip&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.1.3&terminal_type=1&lang=zh-cn&lang=zh&v=5968" \
+curl --url "http://10.50.255.11:801/eportal/portal/login?callback=dr1003&login_method=1&user_account=%2C0%2C$account%40$isp&user_password=$password&wlan_user_ip=$wlanuserip&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.1.3&terminal_type=1&lang=zh-cn&lang=zh&v=5968" \
   -H "accept: */*" \
   -H "accept-language: zh-CN,zh;q=0.9,en;q=0.8" \
   -H "connection: keep-alive" \
-  -H "host: 10.50.255.12:801" \
-  -H "referer: http://10.50.255.12/" \
+  -H "host: 10.50.255.11:801" \
+  -H "referer: http://10.50.255.11/" \
   -H "user-agent: $UA" \
   -m $timeout
